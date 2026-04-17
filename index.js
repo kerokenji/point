@@ -20,33 +20,46 @@ for (const file of commandFiles) {
   client.commands.set(command.data.name, command);
 }
 
-// Prefix commands
-client.on('messageCreate', async message => {
-  if (message.author.bot) return;
-  const prefix = '!';
+// Slash Commands
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
 
-  if (message.content.startsWith(prefix + 'pt') && !message.content.startsWith(prefix + 'pta')) {
-    const cmd = client.commands.get('playtime');
-    if (cmd) await cmd.execute({ ...message, member: message.member, user: message.author, guild: message.guild, reply: msg => message.reply(msg) });
-  }
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
 
-  if (message.content === prefix + 'pta' || message.content === prefix + 'pt a') {
-    const cmd = client.commands.get('pta');
-    if (cmd) await cmd.execute({ ...message, member: message.member, user: message.author, guild: message.guild, reply: msg => message.reply(msg) });
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error('Lỗi slash command:', error);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ 
+        content: 'Có lỗi xảy ra khi xử lý lệnh!', 
+        ephemeral: true 
+      }).catch(() => {});
+    }
   }
 });
 
-// Slash commands
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isCommand()) return;
+// Prefix Commands (!pt, !pta)
+client.on('messageCreate', async message => {
+  if (message.author.bot) return;
 
-  const command = client.commands.get(interaction.commandName);
-  if (command) {
-    try {
-      await command.execute(interaction);
-    } catch (error) {
-      console.error(error);
-      await interaction.reply({ content: 'Có lỗi xảy ra!', ephemeral: true });
+  const prefix = '!';
+  const content = message.content.toLowerCase().trim();
+
+  let cmdName = null;
+  if (content === prefix + 'pt' || content.startsWith(prefix + 'pt ')) cmdName = 'playtime';
+  if (content === prefix + 'pta') cmdName = 'pta';
+
+  if (cmdName) {
+    const command = client.commands.get(cmdName);
+    if (command) {
+      try {
+        await command.execute(message);
+      } catch (error) {
+        console.error('Lỗi prefix command:', error);
+        message.reply('Có lỗi xảy ra!').catch(() => {});
+      }
     }
   }
 });
@@ -55,4 +68,9 @@ client.once('ready', () => {
   console.log(`✅ Bot ${client.user.tag} đã online!`);
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// === TEMPORARY HARD CODE TOKEN (chỉ dùng để test) ===
+const DISCORD_TOKEN = "MTQ5ND";   // ← DÁN ĐẦY ĐỦ TOKEN BOT VÀO ĐÂY
+
+client.login(DISCORD_TOKEN)
+  .then(() => console.log("✅ Bot đã login thành công bằng hardcode token"))
+  .catch(err => console.error("❌ Login thất bại:", err.message));
