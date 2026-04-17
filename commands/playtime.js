@@ -1,15 +1,34 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const { getAllPlaytime, getLastUpdateTime } = require('../utils/db');
 const { createDiscordToAccountMap } = require('../utils/mapping');
 const { formatPlaytime } = require('../utils/helpers');
 
 module.exports = {
-  data: {
-    name: 'playtime',
-    description: 'Xem thời gian chơi của bạn',
-  },
-  async execute(interaction) {
-    const discordId = interaction.user.id;
+  data: new SlashCommandBuilder()
+    .setName('playtime')
+    .setDescription('Xem thời gian chơi của bạn hoặc người khác')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Người muốn kiểm tra (để trống = kiểm tra bản thân)')
+        .setRequired(false)
+    ),
+
+  async execute(ctx) {
+    const isInteraction = !!ctx.isChatInputCommand;
+
+    // Lấy người dùng cần check
+    let targetUser;
+    if (isInteraction) {
+      targetUser = ctx.options.getUser('user') || ctx.user;
+    } else {
+      // Prefix command thì mặc định là người dùng lệnh
+      targetUser = ctx.author;
+    }
+
+    const discordId = targetUser.id;
+    const displayName = targetUser.displayName || targetUser.username || 'Unknown';
+
     const discordToAccount = createDiscordToAccountMap();
     const accountId = discordToAccount[discordId];
 
@@ -17,11 +36,9 @@ module.exports = {
     let minutes = 0;
 
     if (accountId) {
-      const dbMap = new Map();
-      rows.forEach(row => {
-        const acc = row.steamid.split(':').pop();
-        dbMap.set(acc, row.minutes);
-      });
+      const dbMap = new Map(
+        rows.map(row => [row.steamid.split(':').pop(), row.minutes])
+      );
       minutes = dbMap.get(accountId) || 0;
     }
 
@@ -30,12 +47,22 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(0x00FF00)
+      .setTitle('Thời gian chơi')
       .setDescription(
-        `**Người chơi:** ${interaction.member.displayName}\n` +
-        `**Giờ chơi:** \( {hours} giờ ( \){minutes} phút)\n` +
-        `**Cập nhật lần cuối:** ${updateTime}`
-      );
+        `**Người chơi:** ${displayName}\n` +
+        `**Giờ chơi:** ${hours} giờ (${minutes} phút)`
+      )
+      .setFooter({ text: `Cập nhật lần cuối: ${updateTime}` })
+      .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    try {
+      if (isInteraction) {
+        await ctx.reply({ embeds: [embed] });
+      } else {
+        await ctx.reply({ embeds: [embed] });
+      }
+    } catch (err) {
+      console.error('Reply error:', err.message);
+    }
   },
 };
