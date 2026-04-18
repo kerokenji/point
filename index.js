@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { initDB, handleChatMessage } = require('./utils/db');
 const fs = require('fs');
 const path = require('path');
 
@@ -62,14 +63,17 @@ client.on('messageCreate', async message => {
       }
     }
   }
+    // === AUTO POINT CHAT (thêm ngay đây) ===
+  handleChatMessage(message.author.id);
 });
 
 client.once('ready', () => {
+  initDB();
   console.log(`✅ Bot ${client.user.tag} đã online!`);
 });
 
 // === TEMPORARY HARD CODE TOKEN (chỉ dùng để test) ===
-const DISCORD_TOKEN = "MTQ5ND";   // ← DÁN ĐẦY ĐỦ TOKEN BOT VÀO ĐÂY
+const DISCORD_TOKEN = "MTQ5NDU1MzcyOTg0NzAwMTE3OQ.GUtt6Q.o8o6Zif_1mA2919rSohkrMI4aSm21DFcbKG4v0";   // ← DÁN ĐẦY ĐỦ TOKEN BOT VÀO ĐÂY
 
 client.login(DISCORD_TOKEN)
   .then(() => console.log("✅ Bot đã login thành công bằng hardcode token"))
