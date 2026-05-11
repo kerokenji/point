@@ -4,6 +4,11 @@ const setupVoiceTracker = require('./features/voiceTracker');
 const fs = require('fs');
 const path = require('path');
 
+// --- IMPORT TÍNH NĂNG CARD GAME (MỚI GỘP) ---
+const { spawnCard } = require('./game_engine');
+const cron = require('node-cron');
+const CARD_CHANNEL_ID = '1295359113110225042'; // ID kênh thả thẻ từ index_card
+
 // --- IMPORT TÍNH NĂNG TAG SYSTEM ---
 const { startTag, stopTag } = require('./tagSystem');
 
@@ -58,7 +63,17 @@ client.on('messageCreate', async message => {
   const args = content.split(/\s+/);
   const commandName = args[0].replace(prefix, '');
 
-  // 1. Lệnh Online / Stop (Tính năng Tag mới thêm vào)
+  // --- LỆNH SPAWN THẺ (MỚI GỘP) ---
+  if (commandName === 'spawn') {
+    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return message.reply('Chỉ Admin mới có quyền dùng lệnh này!');
+    }
+    message.channel.send('Đang triệu hồi thẻ khẩn cấp...');
+    spawnCard(client, message.channelId);
+    return; // Dừng xử lý để không chạy xuống các lệnh dưới
+  }
+
+  // 1. Lệnh Online / Stop (Tính năng Tag)
   if (commandName === 'online') {
     if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('Bạn không có quyền!');
     const started = startTag(client, message.channel.id);
@@ -120,10 +135,17 @@ client.on('messageCreate', async message => {
 client.once('ready', () => {
   initPointsDB();
   console.log(`✅ Bot ${client.user.tag} đã online!`);
+
+  // --- LẬP LỊCH SPAWN THẺ TỰ ĐỘNG (MỚI GỘP) ---
+  cron.schedule('30 12,19,21 * * *', () => {
+    spawnCard(client, CARD_CHANNEL_ID);
+    console.log('--- Đã thực hiện spawn thẻ tự động theo lịch ---');
+  }, { timezone: "Asia/Ho_Chi_Minh" });
 });
 
 // ====================== LOGIN ======================
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN || "MTQcodnaygiaaI";
+// Sử dụng key trực tiếp như bạn yêu cầu
+const DISCORD_TOKEN = "MTQ5NDU1MzcyOkeygiado9MaI"; 
 
 client.login(DISCORD_TOKEN)
   .then(() => console.log("✅ Bot đã login thành công"))
