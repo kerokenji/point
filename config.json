@@ -1,0 +1,16 @@
+{
+  "OWNER_ID": "453518925997670411",
+  "ANNOUNCE_CHANNEL_ID": "1389473240824414306",
+  "SQ3_PATH": "./sourcemod-local.sq3",
+  "MAPPING_PATH": "./steam_discord_mapping.json",
+  "PLAYTIME_ROLES": [
+    {"min_min": 300,    "role_id": "1468536962611679362", "name": "5 tiếng"},
+    {"min_min": 1200,   "role_id": "1468537240866258987", "name": "20 tiếng"},
+    {"min_min": 3000,   "role_id": "1468537280494047289", "name": "50 tiếng"},
+    {"min_min": 6000,   "role_id": "1468537312970281163", "name": "100 tiếng"},
+    {"min_min": 30000,  "role_id": "1468537346713714772", "name": "500 tiếng"},
+    {"min_min": 60000,  "role_id": "1468537374026895521", "name": "1000 tiếng"},
+    {"min_min": 120000, "role_id": "1468539599193374750", "name": "2000 tiếng"},
+    {"min_min": 300000, "role_id": "1468540038383140904", "name": "5000 tiếng"}
+  ]
+}
